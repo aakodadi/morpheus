@@ -78,8 +78,14 @@ main(int argc, char** argv)
   MATH10
   pid_t pid;
   MATH10
+  int status;
+  MATH10
+  int exitstatus;
+  MATH10
+  int signal;
 
   // read self
+  MATH10
   fptr = fopen("/proc/self/exe", "rb");
   MATH10
   fseek(fptr, 0, SEEK_END);
@@ -93,13 +99,13 @@ main(int argc, char** argv)
 	fread(buffer, size, 1, fptr);
   MATH10
   fclose(fptr);
-  MATH10
 
+  MATH10
   for (child_i = 0; child_i < 1000000; child_i++)
     {
-      MATH10
 
       // create dir and cd
+      MATH10
       sprintf(dir, "%06d", child_i);
       MATH10
       mkdir(dir, 0755);
@@ -107,19 +113,19 @@ main(int argc, char** argv)
       printf("cd %s\n", dir);
       MATH10
       chdir(dir);
-      MATH10
 
       // mutation
-      srand(time(0));
+      MATH10
+      srand(time(0)); // todo: put outside the loop
       MATH10
       byte = rand() % size;
       MATH10
       bit = rand() % 8;
       MATH10
       buffer[byte] ^= 1 << bit;
-      MATH10
 
       // write to file
+      MATH10
       fptr = fopen(progname, "wb");
       MATH10
       fwrite(buffer, size, 1, fptr);
@@ -127,17 +133,15 @@ main(int argc, char** argv)
       fclose(fptr);
       MATH10
       chmod(progname, 0731);
-      MATH10
 
       // create child process
-
+      MATH10
       pid = fork();
       MATH10
       if (pid == 0)
         {
           MATH10
           execl(progname, NULL);
-          MATH10
         }
       else
         {
@@ -146,45 +150,40 @@ main(int argc, char** argv)
           MATH10
           chdir("..");
           MATH10
-          int status;
-          MATH10
-          wait(&status);
-          MATH10
-          printf("child: #%s, pid: %d", dir, pid);
-          MATH10
-          if(WIFEXITED(status))
-            {
-              MATH10
-              int exitstatus = WEXITSTATUS(status);
-              MATH10
-              printf(", status (%d): %s", exitstatus, strerror(exitstatus));
-              MATH10
-              // revert mutation if not success
-              if(exitstatus != 0)
-                {
-                  MATH10
-                  buffer[byte] ^= 1 << bit;
-                }
-              MATH10
-            }
-          else if(WIFSIGNALED(status))
-            {
-              MATH10
-              int signal = WTERMSIG(status);
-              MATH10
-              printf(", signal (%d): %s", signal, strsignal(signal));
-              MATH10
-            }
-          MATH10
-          printf("\n");
-        }
-      MATH100
+          printf("child: #%s, pid: %d\n", dir, pid);
+        } // if (pid == 0) else
 
+    } // for loop
+
+  while ((pid = wait(&status)) >= 0)
+    {
+      MATH10
+      if(WIFEXITED(status))
+        {
+          MATH10
+          exitstatus = WEXITSTATUS(status);
+          MATH10
+          printf("pid: %d, status (%d): %s\n", pid, exitstatus, strerror(exitstatus));
+        }
+      else if(WIFSIGNALED(status))
+        {
+          MATH10
+          signal = WTERMSIG(status);
+          MATH10
+          printf("pid: %d, signal (%d): %s", pid, signal, strsignal(signal));
+        }
     }
 
   MATH100
   free(buffer);
-  MATH100
 
+  MATH100
+  fptr = fopen("success", "wb");
+  MATH100
+  fprintf(fptr, "1");
+  MATH100
+  fclose(fptr);
+
+  MATH100
   return 0;
 }
