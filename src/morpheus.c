@@ -159,6 +159,13 @@ main(int argc, char** argv)
               MATH10
               printf(", status (%d): %s", exitstatus, strerror(exitstatus));
               MATH10
+              // revert mutation if not success
+              if(exitstatus != 0)
+                {
+                  MATH10
+                  buffer[byte] ^= 1 << bit;
+                }
+              MATH10
             }
           else if(WIFSIGNALED(status))
             {
