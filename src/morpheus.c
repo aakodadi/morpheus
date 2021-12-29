@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <uuid/uuid.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <string.h>
@@ -60,103 +59,124 @@ float frand(float min, float max){
 int
 main(int argc, char** argv)
 {
-  MATH100
-
-  while (1)
-   {
-
-   }
-
-
-  // generate uuid
-  uuid_t uuid;
   MATH10
-  uuid_generate(uuid);
+  const char* progname = "morpheus";
   MATH10
-  char uuid_str[UUID_STR_LEN];
+  char dir[10];
   MATH10
-  uuid_unparse_lower(uuid, uuid_str);
+  FILE *fptr;
   MATH10
-
-  // generate new filename
-  char name[UUID_STR_LEN + 10];
+  char* buffer;
   MATH10
-  sprintf(name, "morpheus-%s", uuid_str);
+  unsigned long size;
   MATH10
-
-  printf("%s\n", name);
-  fflush(stdout);
+  int byte;
+  MATH10
+  int bit;
+  MATH10
+  unsigned int child_i;
+  MATH10
+  pid_t pid;
   MATH10
 
   // read self
-  FILE *fptr = fopen("/proc/self/exe", "rb");
+  fptr = fopen("/proc/self/exe", "rb");
   MATH10
   fseek(fptr, 0, SEEK_END);
   MATH10
-  unsigned long size = ftell(fptr);
+  size = ftell(fptr);
   MATH10
-  char buffer[size + 1];
+  buffer = malloc(size + 1);
   MATH10
 	fseek(fptr, 0, SEEK_SET);
   MATH10
 	fread(buffer, size, 1, fptr);
   MATH10
   fclose(fptr);
-  
-  // mutation
-  srand(time(0));
   MATH10
-  int byte = rand() % size;
-  MATH10
-  int bit = rand() % 8;
-  MATH10
-  buffer[byte] ^= 1 << bit;
 
-  // write to file
-  fptr = fopen(name, "wb");
-  MATH10
-	fwrite(buffer, size, 1, fptr);
-  MATH10
-  fclose(fptr);
-  MATH10
-  chmod(name, 0731);
-
-  pid_t pid = fork();
-  MATH10
-  if (pid == 0)
+  for (child_i = 0; child_i < 1000000; child_i++)
     {
       MATH10
-      execl(name, NULL);
+
+      // create dir and cd
+      sprintf(dir, "%06d", child_i);
       MATH10
-    }
-  else
-    {
+      mkdir(dir, 0755);
       MATH10
-      int status;
+      printf("cd %s\n", dir);
       MATH10
-      wait(&status);
+      chdir(dir);
       MATH10
-      printf("name: %s, pid: %d", name, pid);
+
+      // mutation
+      srand(time(0));
       MATH10
-      if(WIFEXITED(status))
+      byte = rand() % size;
+      MATH10
+      bit = rand() % 8;
+      MATH10
+      buffer[byte] ^= 1 << bit;
+      MATH10
+
+      // write to file
+      fptr = fopen(progname, "wb");
+      MATH10
+      fwrite(buffer, size, 1, fptr);
+      MATH10
+      fclose(fptr);
+      MATH10
+      chmod(progname, 0731);
+      MATH10
+
+      // create child process
+
+      pid = fork();
+      MATH10
+      if (pid == 0)
         {
           MATH10
-          int exitstatus = WEXITSTATUS(status);
-          MATH10
-          printf(", status (%d): %s", exitstatus, strerror(exitstatus));
+          execl(progname, NULL);
           MATH10
         }
-      else if(WIFSIGNALED(status))
+      else
         {
           MATH10
-          int signal = WTERMSIG(status);
+          printf("cd ..\n");
           MATH10
-          printf(", signal (%d): %s", signal, strsignal(signal));
+          chdir("..");
           MATH10
+          int status;
+          MATH10
+          wait(&status);
+          MATH10
+          printf("child: #%s, pid: %d", dir, pid);
+          MATH10
+          if(WIFEXITED(status))
+            {
+              MATH10
+              int exitstatus = WEXITSTATUS(status);
+              MATH10
+              printf(", status (%d): %s", exitstatus, strerror(exitstatus));
+              MATH10
+            }
+          else if(WIFSIGNALED(status))
+            {
+              MATH10
+              int signal = WTERMSIG(status);
+              MATH10
+              printf(", signal (%d): %s", signal, strsignal(signal));
+              MATH10
+            }
+          MATH10
+          printf("\n");
         }
-      MATH10
-      printf("\n");
+      MATH100
+
     }
+
+  MATH100
+  free(buffer);
   MATH100
 
   return 0;
