@@ -102,7 +102,7 @@ main()
 
       // create dir and cd
       MATH10
-      sprintf(dir, "%06d", child_i);
+      sprintf(dir, "%d", child_i);
       MATH10
       mkdir(dir, 0755);
       MATH10
