@@ -1,6 +1,19 @@
-.PHONY: all
+CXX=g++
+STANDARD=c++20 -pedantic-errors
+CFLAGS= -Wall -Wextra -Werror -std=$(STANDARD) -s
 
-all: bin/morpheus
+.PHONY: all clean makedirs
 
-bin/morpheus: src/morpheus.c
-	$(CC) -Wall -Wextra -Werror -s -o bin/morpheus src/morpheus.c -lm
+all: makedirs bin/morpheus
+
+bin/morpheus: bin/morpheus.o
+	$(CXX) $(CFLAGS) -lm -lpthread -o $@ $<
+
+bin/morpheus.o: src/morpheus.c
+	$(CXX) -c $(CFLAGS) -o $@ $<
+
+makedirs:
+	mkdir -p bin
+
+clean:
+	$(RM) -r bin

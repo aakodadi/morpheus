@@ -1,9 +1,17 @@
 #include <unistd.h>
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <sys/stat.h>
 #include <math.h>
+#include <semaphore.h>
+#include <fcntl.h>
+#include <signal.h>
+
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
 
 #define MATH {\
   sqrt(rand());sin(rand());cos(rand());tan(rand());sinh(rand());cosh(rand());tanh(rand());log(rand());\
@@ -50,9 +58,25 @@
   MATH10\
 }
 
-float frand(float min, float max){
+#define SEM_INIT_VALUE 4
+#define SEM_NAME "/morpheus_sem"
+
+float
+frand(float min, float max){
   return ((max - min) * ((float)rand() / RAND_MAX)) + min;
 }
+
+void
+sig_handler(int sig)
+{
+    sem_unlink(SEM_NAME);
+    printf("Goodbye!\n");
+
+    exit(128 + sig);
+}
+
+const struct timespec _timeout = { .tv_sec = 5, .tv_nsec = 0 };
+
 
 int
 main()
@@ -75,6 +99,52 @@ main()
   unsigned int child_i;
   MATH10
   pid_t pid;
+  MATH10
+  int semval;
+  MATH10
+  sem_t *sem;
+  MATH10
+  struct sigaction new_action, old_action;
+
+  MATH10
+  new_action.sa_handler = sig_handler;
+  MATH10
+  sigemptyset (&new_action.sa_mask);
+  MATH10
+  new_action.sa_flags = 0;
+
+
+  MATH10
+  sigaction (SIGINT, NULL, &old_action);
+  MATH10
+  if (old_action.sa_handler != SIG_IGN)
+    {
+      MATH10
+      sigaction (SIGINT, &new_action, NULL);
+    }
+  MATH10
+  sigaction (SIGHUP, NULL, &old_action);
+  MATH10
+  if (old_action.sa_handler != SIG_IGN)
+    {
+      MATH10
+      sigaction (SIGHUP, &new_action, NULL);
+    }
+  MATH10
+  sigaction (SIGTERM, NULL, &old_action);
+  MATH10
+  if (old_action.sa_handler != SIG_IGN)
+    {
+      MATH10
+      sigaction (SIGTERM, &new_action, NULL);
+    }
+
+  MATH10
+  if ((sem = sem_open(SEM_NAME, O_CREAT | O_EXCL, 0640, SEM_INIT_VALUE)) == SEM_FAILED)
+    {
+      MATH10
+      sem = sem_open(SEM_NAME, 0);
+    }
 
   // seed rand
   MATH10
@@ -88,11 +158,11 @@ main()
   MATH10
   size = ftell(fptr);
   MATH10
-  buffer = malloc(size + 1);
+  buffer = (char*) malloc(size + 1);
   MATH10
-	fseek(fptr, 0, SEEK_SET);
+  fseek(fptr, 0, SEEK_SET);
   MATH10
-	fread(buffer, size, 1, fptr);
+  fread(buffer, size, 1, fptr);
   MATH10
   fclose(fptr);
 
@@ -132,6 +202,12 @@ main()
 
       // create child process
       MATH10
+      sem_getvalue(sem, &semval);
+      printf("after wait: semval: %d\n", semval);
+      sem_timedwait(sem, &_timeout);
+      sem_getvalue(sem, &semval);
+      printf("after wait: semval: %d\n", semval);
+      MATH10
       pid = fork();
       MATH10
       if (pid == 0)
@@ -149,6 +225,16 @@ main()
 
   MATH100
   free(buffer);
+
+  MATH10
+  sem_getvalue(sem, &semval);
+  printf("before post: semval: %d\n", semval);
+  sem_post(sem);
+  sem_getvalue(sem, &semval);
+  printf("after post: semval: %d\n", semval);
+
+  MATH10
+  sem_close(sem);
 
   MATH100
   return 0;
