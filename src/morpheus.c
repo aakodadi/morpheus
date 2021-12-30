@@ -186,12 +186,5 @@ main(int argc, char** argv)
   free(buffer);
 
   MATH100
-  fptr = fopen("success", "wb");
-  MATH100
-  fprintf(fptr, "1");
-  MATH100
-  fclose(fptr);
-
-  MATH100
   return 0;
 }
