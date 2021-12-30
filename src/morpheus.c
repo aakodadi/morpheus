@@ -105,7 +105,7 @@ main(int argc, char** argv)
   fclose(fptr);
 
   MATH10
-  for (child_i = 0; child_i < 1000000; child_i++)
+  for (child_i = 0; child_i < 50; child_i++)
     {
 
       // create dir and cd
