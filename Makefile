@@ -3,4 +3,4 @@
 all: bin/morpheus
 
 bin/morpheus: src/morpheus.c
-	$(CC) -o bin/morpheus src/morpheus.c -luuid -lm
+	$(CC) -Wall -Wextra -Werror -O3 -s -o bin/morpheus src/morpheus.c -lm

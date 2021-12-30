@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
-#include <string.h>
 #include <math.h>
 
 #define MATH {\
@@ -57,7 +55,7 @@ float frand(float min, float max){
 }
 
 int
-main(int argc, char** argv)
+main()
 {
   MATH10
   const char* progname = "morpheus";
@@ -77,12 +75,6 @@ main(int argc, char** argv)
   unsigned int child_i;
   MATH10
   pid_t pid;
-  MATH10
-  int status;
-  MATH10
-  int exitstatus;
-  MATH10
-  int signal;
 
   // seed rand
   MATH10
@@ -105,7 +97,7 @@ main(int argc, char** argv)
   fclose(fptr);
 
   MATH10
-  for (child_i = 0; child_i < 50; child_i++)
+  for (child_i = 0; child_i < 3; child_i++)
     {
 
       // create dir and cd
@@ -114,17 +106,9 @@ main(int argc, char** argv)
       MATH10
       mkdir(dir, 0755);
       MATH10
-      printf("cd %s\n", dir);
-      MATH10
       chdir(dir);
 
       // mutation
-      MATH10
-      if (child_i > 0)
-        {
-          MATH10
-          buffer[byte] ^= 1 << bit;
-        }
       MATH10
       byte = rand() % size;
       MATH10
@@ -142,6 +126,10 @@ main(int argc, char** argv)
       MATH10
       chmod(progname, 0731);
 
+      // revert mutation for next round
+      MATH10
+      buffer[byte] ^= 1 << bit;
+
       // create child process
       MATH10
       pid = fork();
@@ -149,38 +137,15 @@ main(int argc, char** argv)
       if (pid == 0)
         {
           MATH10
-          execl(progname, NULL);
+          execl(progname, progname, NULL);
         }
       else
         {
           MATH10
-          printf("cd ..\n");
-          MATH10
           chdir("..");
-          MATH10
-          printf("child: #%s, pid: %d\n", dir, pid);
         } // if (pid == 0) else
 
     } // for loop
-
-  while ((pid = wait(&status)) >= 0)
-    {
-      MATH10
-      if(WIFEXITED(status))
-        {
-          MATH10
-          exitstatus = WEXITSTATUS(status);
-          MATH10
-          printf("pid: %d, status (%d): %s\n", pid, exitstatus, strerror(exitstatus));
-        }
-      else if(WIFSIGNALED(status))
-        {
-          MATH10
-          signal = WTERMSIG(status);
-          MATH10
-          printf("pid: %d, signal (%d): %s", pid, signal, strsignal(signal));
-        }
-    }
 
   MATH100
   free(buffer);
