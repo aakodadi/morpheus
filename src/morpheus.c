@@ -84,6 +84,10 @@ main(int argc, char** argv)
   MATH10
   int signal;
 
+  // seed rand
+  MATH10
+  srand(time(0));
+
   // read self
   MATH10
   fptr = fopen("/proc/self/exe", "rb");
@@ -116,7 +120,11 @@ main(int argc, char** argv)
 
       // mutation
       MATH10
-      srand(time(0)); // todo: put outside the loop
+      if (child_i > 0)
+        {
+          MATH10
+          buffer[byte] ^= 1 << bit;
+        }
       MATH10
       byte = rand() % size;
       MATH10
